@@ -52,7 +52,7 @@ void SPI_A3_sendData(uint8_t* sndBuffer, uint8_t sndBufferSize) {
             EUSCI_A_SPI_TRANSMIT_INTERRUPT
     );
 
-    uint8_t byteCounter = 0;
+	uint8_t byteCounter = 0;
 
 	for (byteCounter = 0; byteCounter < sndBufferSize; byteCounter++) {
 		__bic_SR_register(GIE);
