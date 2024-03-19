@@ -15,31 +15,35 @@ void SPI_GPIO_init(void) {
         GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2,
         GPIO_PRIMARY_MODULE_FUNCTION
     );
-
-	PMM_unlockLPM5();
+    
+    PMM_unlockLPM5();
 }
 
 void SPI_A3_init(uint8_t clockSource, uint32_t desiredSpiClock) {
     SPI_GPIO_init();
     SPI_CS_init();
+    	
+    EUSCI_A_SPI_initMasterParam masterParams;
+    masterParams.selectClockSource = clockSource;
+    masterParams.clockSourceFrequency = CS_getSMCLK();
+    masterParams.desiredSpiClock = desiredSpiClock;
+    masterParams.msbFirst = EUSCI_A_SPI_MSB_FIRST;
+    masterParams.clockPhase = EUSCI_A_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;
+    masterParams.clockPolarity = EUSCI_A_SPI_CLOCKPOLARITY_INACTIVITY_HIGH;
+    masterParams.spiMode = EUSCI_A_SPI_3PIN;
+    
+    EUSCI_A_SPI_initMaster(EUSCI_A3_BASE, &masterParams);	
+    
+    EUSCI_A_SPI_enable(EUSCI_A3_BASE);
+    
+    EUSCI_A_SPI_clearInterrupt(
+    	EUSCI_A3_BASE, 
+    	EUSCI_A_SPI_TRANSMIT_INTERRUPT | EUSCI_A_SPI_RECEIVE_INTERRUPT
+    );
+}
 
-	EUSCI_A_SPI_initMasterParam masterParams;
-	masterParams.selectClockSource = clockSource;
-	masterParams.clockSourceFrequency = CS_getSMCLK();
-	masterParams.desiredSpiClock = desiredSpiClock;
-	masterParams.msbFirst = EUSCI_A_SPI_MSB_FIRST;
-	masterParams.clockPhase = EUSCI_A_SPI_PHASE_DATA_CHANGED_ONFIRST_CAPTURED_ON_NEXT;
-	masterParams.clockPolarity = EUSCI_A_SPI_CLOCKPOLARITY_INACTIVITY_HIGH;
-	masterParams.spiMode = EUSCI_A_SPI_3PIN;
-
-	EUSCI_A_SPI_initMaster(EUSCI_A3_BASE, &masterParams);	
-
-	EUSCI_A_SPI_enable(EUSCI_A3_BASE);
-
-	EUSCI_A_SPI_clearInterrupt(
-		EUSCI_A3_BASE, 
-		EUSCI_A_SPI_TRANSMIT_INTERRUPT | EUSCI_A_SPI_RECEIVE_INTERRUPT
-	);
+void SPI_A3_sendByte(uint8_t byte) {
+    SPI_A3_sendData(&byte, 1);
 }
 
 void SPI_A3_sendData(uint8_t* sndBuffer, uint8_t sndBufferSize) {
@@ -66,10 +70,6 @@ void SPI_A3_sendData(uint8_t* sndBuffer, uint8_t sndBufferSize) {
     );
 }
 
-void SPI_A3_sendByte(uint8_t byte) {
-    SPI_A3_sendData(&byte, 1);
-}
-
 uint8_t SPI_A3_sendRegisterReceiveByte(uint8_t regAddr) {
     uint8_t dataByte = 0x55;
 
@@ -80,36 +80,36 @@ uint8_t SPI_A3_sendRegisterReceiveByte(uint8_t regAddr) {
 
 void SPI_A3_sendRegisterReceiveData(uint8_t regAddr, uint8_t* recvBuffer, uint8_t recvBufferSize) {
     __bic_SR_register(GIE);
-
+    
     EUSCI_A_SPI_transmitData(EUSCI_A3_BASE, regAddr);
-
+    
     UCA3IE |= UCRXIE;
     __bis_SR_register(LPM0_bits | GIE); // wait for RX interrupt
     volatile uint8_t dummyRX = EUSCI_A_SPI_receiveData(EUSCI_A3_BASE); // ignore received value
     UCA3IE &= ~(UCRXIE);
-
+    
     UCA3IE |= UCTXIE;
     __bis_SR_register(LPM0_bits | GIE); // wait for TX interrupt
     UCA3IE &= ~(UCTXIE);
-
+    
     __delay_cycles(40);
-
+    
     // from now on, dummy bytes will be sent for receiving data
-
+    
     uint8_t byteCounter = 0;
-
+    
     for (byteCounter = 0; byteCounter < recvBufferSize; byteCounter++) {
         EUSCI_A_SPI_transmitData(EUSCI_A3_BASE, 0x00);
-
+    
         UCA3IE |= UCRXIE;
         __bis_SR_register(LPM0_bits | GIE);
         recvBuffer[byteCounter] = EUSCI_A_SPI_receiveData(EUSCI_A3_BASE);
         UCA3IE &= ~(UCRXIE);
-
+    
         UCA3IE |= UCTXIE;
         __bis_SR_register(LPM0_bits | GIE);
         UCA3IE &= ~(UCTXIE);
-
+    
         __delay_cycles(40);
     }
 }
