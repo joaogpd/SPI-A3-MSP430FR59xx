@@ -55,14 +55,14 @@ void SPI_A3_sendData(uint8_t* sndBuffer, uint8_t sndBufferSize) {
     uint8_t byteCounter = 0;
 
 	for (byteCounter = 0; byteCounter < sndBufferSize; byteCounter++) {
-	    __bic_SR_register(GIE);
-
+		__bic_SR_register(GIE);
+		
 		EUSCI_A_SPI_transmitData(EUSCI_A3_BASE, sndBuffer[byteCounter]);
-
-        __bis_SR_register(LPM0_bits | GIE);
+		
+		__bis_SR_register(LPM0_bits | GIE);
 	}
 
-    while (EUSCI_A_SPI_isBusy(EUSCI_A3_BASE));
+    while (EUSCI_A_SPI_isBusy(EUSCI_A3_BASE)); // assure all data has been shifted
 
     EUSCI_A_SPI_disableInterrupt(
             EUSCI_A3_BASE,
