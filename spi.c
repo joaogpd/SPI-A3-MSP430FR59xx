@@ -9,7 +9,7 @@ void SPI_CS_init(void) {
 }
 
 void SPI_GPIO_init(void) {
-    // configure SPI pins, UCA3SIHIGHMO: P6.0; UCA3SOMI: P6.1; UCA3CLK: P6.2
+    // configure SPI pins, UCA3SIMO: P6.0; UCA3SOMI: P6.1; UCA3CLK: P6.2
     GPIO_setAsPeripheralModuleFunctionInputPin(
         GPIO_PORT_P6,
         GPIO_PIN0 | GPIO_PIN1 | GPIO_PIN2,
