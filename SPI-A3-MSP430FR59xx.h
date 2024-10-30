@@ -19,7 +19,7 @@ void SPI_A3_GPIO_init(void);
  * @param clockSource source to be used for the SPI clock. Can be: EUSCI_A_SPI_CLOCKSOURCE_SMCLK
  * or EUSCI_A_SPI_CLOCKSOURCE_ACLK. If an invalid value is provided, ACLK will be sourced.
  * @param desiredSpiClock selects the SPI clock's desired SPI, the clock source that 
- * was chosen should be considered, as it needs to be able to provide the select clock value.
+ * was chosen should be considered, as it needs to be able to provide the selected clock value.
  */
 void SPI_A3_init(uint8_t clockSource, uint32_t desiredSpiClock,
                  uint16_t clockPhase, uint16_t clockPolarity);
